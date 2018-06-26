@@ -90,3 +90,4 @@ typings/
 
 
 keys.json
+.gitsecret/keys/random_seed
