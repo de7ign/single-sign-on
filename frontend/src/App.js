@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
+import Login from './components/Login/login.js'
 
 class App extends Component {
   render() {
@@ -10,7 +11,7 @@ class App extends Component {
             &nbsp;
           </div>
           <div class="one-third column">
-            <a class="button-primary button" href="http://localhost:5000/v1/api/auth/google">Login with google</a>
+            <Login />
           </div>
           <div class="one-third column">
             &nbsp;
