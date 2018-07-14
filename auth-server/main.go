@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 )
 
 type key struct {
 	Gg web `json:"gg"`
 	Fb web `json:"fb"`
+	Gh web `json:"ghb"`
 }
 
 type web struct {
@@ -50,6 +52,19 @@ type tokenInfo struct {
 	Locale        string `json:"locale"`
 	Alg           string `json:"alg"`
 	Kid           string `json:"kid"`
+}
+
+type githubToken struct {
+	AccessToken string `json:"access_token"`
+	Scope       string `json:"scope"`
+	TokenType   string `json:"token_type"`
+}
+
+type githubTokenInfo struct {
+	AvatarURL string `json:"avatar_url"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Message   string `json:"message"`
 }
 
 func googleHandler(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +130,7 @@ func oauth2callbackHandler(w http.ResponseWriter, r *http.Request) {
 		var tokenInfo tokenInfo
 		err = json.Unmarshal(data, &tokenInfo)
 		if err != nil {
-			log.Printf("error in unmarshalling tokenInfo, ", )
+			log.Print("error in unmarshalling tokenInfo, ", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -125,10 +140,84 @@ func oauth2callbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func githubHandler(w http.ResponseWriter, r *http.Request) {
+	state := "abc123"
+	http.Redirect(w, r, keys.Gh.AuthURI+"?client_id="+keys.Gh.ClientID+
+		"&redirect_uri="+keys.Gh.RedirectURIs[1]+
+		"&scope=user:email"+
+		"&state="+state, http.StatusFound)
+}
+
+func oauth2callbackHandlerGh(w http.ResponseWriter, r *http.Request) {
+	state := "abc123"
+	log.Print(r)
+	q := r.URL.Query()
+
+	params := url.Values{
+		"client_id":     {keys.Gh.ClientID},
+		"client_secret": {keys.Gh.ClientSecret},
+		"code":          {q.Get("code")},
+		"redirect_uri":  {keys.Gh.RedirectURIs[1]},
+		"state":         {state}}
+
+	postData := strings.NewReader(params.Encode())
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", keys.Gh.TokenURI, postData)
+	req.Header.Add("Accept", "application/json")
+	res, err := client.Do(req)
+
+	if err != nil {
+		log.Print("error in exchanging code, ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	data, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		log.Print("error in reading body, ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var token githubToken
+	err = json.Unmarshal(data, &token)
+	if err != nil {
+		log.Println("error on unmarshaling, ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	log.Print(token)
+	log.Print("token " + token.AccessToken)
+	req, err = http.NewRequest("GET", keys.Gh.TokenInfoURI, nil)
+	req.Header.Add("Authorization", "token "+token.AccessToken)
+	res, err = client.Do(req)
+
+	data, err = ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		log.Print("error in reading body, ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var tokenInfo githubTokenInfo
+	err = json.Unmarshal(data, &tokenInfo)
+	if err != nil {
+		log.Println("error on unmarshaling, ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	log.Print(tokenInfo)
+}
+
 func main() {
 	readFile("keys.json")
 	http.HandleFunc("/v1/api/auth/google", googleHandler)
 	http.HandleFunc("/oauth2callback", oauth2callbackHandler)
+	http.HandleFunc("/v1/api/auth/github", githubHandler)
+	http.HandleFunc("/oauth2callbackGh", oauth2callbackHandlerGh)
 	log.Fatal(http.ListenAndServe(":5000", nil))
 }
 
