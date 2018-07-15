@@ -229,8 +229,13 @@ func main() {
 	http.HandleFunc("/oauth2callback", oauth2callbackHandler)
 	http.HandleFunc("/v1/api/auth/github", githubHandler)
 	http.HandleFunc("/oauth2callbackGh", oauth2callbackHandlerGh)
-
+	http.HandleFunc("/v1/api/userinfo", userinfoHandler)
 	log.Fatal(http.ListenAndServe(":5000", nil))
+}
+
+func userinfoHandler(w http.ResponseWriter, r *http.Request) {
+	enableCORS(&w)
+
 }
 
 var (
@@ -251,4 +256,11 @@ func readFile(fileName string) {
 		log.Println(e)
 		os.Exit(1)
 	}
+}
+
+func enableCORS(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Set-Cookie")
+	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
 }
