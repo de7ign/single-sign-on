@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/gorilla/sessions"
 )
 
 type key struct {
@@ -137,6 +139,15 @@ func oauth2callbackHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Println(tokenInfo)
 
+		{
+			session, _ := store.Get(r, "userinfo")
+			session.Values["authenticated"] = true
+			session.Values["name"] = tokenInfo.Name
+			session.Values["email"] = tokenInfo.Email
+			session.Values["avatar"] = tokenInfo.Picture
+			session.Save(r, w)
+			http.Redirect(w, r, "http://localhost:3000/dashboard", http.StatusFound)
+		}
 	}
 }
 
@@ -218,10 +229,15 @@ func main() {
 	http.HandleFunc("/oauth2callback", oauth2callbackHandler)
 	http.HandleFunc("/v1/api/auth/github", githubHandler)
 	http.HandleFunc("/oauth2callbackGh", oauth2callbackHandlerGh)
+
 	log.Fatal(http.ListenAndServe(":5000", nil))
 }
 
-var keys key
+var (
+	keys      key
+	cookieKey = []byte("some-secret-key")
+	store     = sessions.NewCookieStore(cookieKey)
+)
 
 func readFile(fileName string) {
 	file, e := ioutil.ReadFile("./" + fileName)
