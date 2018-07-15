@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { Redirect } from 'react-router-dom'
 import './dashboard.css'
 import axios from 'axios'
 axios.defaults.withCredentials = true
@@ -8,12 +9,12 @@ export default class Dashboard extends Component {
         this.state = {
             name    :   'Loading name',
             avatar :   'Loading avatar',
-            email   :   'Loading email'
+            email   :   'Loading email',
+            authorized  :   true
         }
 
         axios.post('http://localhost:5000/v1/api/userinfo')
         .then((res)=>{
-            console.log(res.data)
             this.setState({
                 name    :   res.data.Name,
                 email   :   res.data.Email,
@@ -21,13 +22,21 @@ export default class Dashboard extends Component {
             })
         })
         .catch((err)=>{
-            console.log(err)
+            this.setState({
+                authorized  :   false
+            })
         })
     }
 
 
 
     render() {
+        let authorized = this.state.authorized;
+        if (!authorized) {
+            return (
+                <Redirect to="/" />
+            )
+        }
         return(
             <div class="dashboard">
                 <h2>User data</h2>
