@@ -69,6 +69,12 @@ type githubTokenInfo struct {
 	Message   string `json:"message"`
 }
 
+type userInfo struct {
+	Name      string
+	Email     string
+	AvatarURL string
+}
+
 func googleHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, keys.Gg.AuthURI+"?scope=profile&access_type=offline"+
 		"&include_granted_scopes=true&state=state_parameter_passthrough_value"+
@@ -221,6 +227,17 @@ func oauth2callbackHandlerGh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Print(tokenInfo)
+
+	{
+		session, _ := store.Get(r, "userinfo")
+		session.Values["authenticated"] = true
+		session.Values["name"] = tokenInfo.Name
+		session.Values["email"] = tokenInfo.Email
+		session.Values["avatar"] = tokenInfo.AvatarURL
+		session.Save(r, w)
+		http.Redirect(w, r, "http://localhost:3000/dashboard", http.StatusFound)
+	}
+
 }
 
 func main() {
@@ -235,7 +252,17 @@ func main() {
 
 func userinfoHandler(w http.ResponseWriter, r *http.Request) {
 	enableCORS(&w)
-
+	session, _ := store.Get(r, "userinfo")
+	if auth, ok := session.Values["authenticated"].(bool); !auth || !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	var userInfo userInfo
+	userInfo.Name, _ = session.Values["name"].(string)
+	userInfo.Email, _ = session.Values["email"].(string)
+	userInfo.AvatarURL, _ = session.Values["avatar"].(string)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(userInfo)
 }
 
 var (
