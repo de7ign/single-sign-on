@@ -7,24 +7,12 @@ import Dashboard from './components/Dashboard/dashboard.js'
 class App extends Component {
   render() {
     return (
-      <div class="container">
-        <div class="row">
-          <div class="one-third column">
-            &nbsp;
-          </div>
-          <div class="one-third column">
-            <BrowserRouter>
-              <div>
-                <Route exact path="/" component={Login} />
-                <Route exact path="/dashboard" component={Dashboard} />
-              </div>
-            </BrowserRouter>
-          </div>
-          <div class="one-third column">
-            &nbsp;
-          </div>
-        </div>
+      <BrowserRouter>
+      <div>
+        <Route exact path="/" component={Login} />
+        <Route exact path="/dashboard" component={Dashboard} />
       </div>
+    </BrowserRouter>
     );
   }
 }
