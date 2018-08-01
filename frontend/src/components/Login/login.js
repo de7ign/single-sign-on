@@ -7,7 +7,8 @@ export default class Login extends Component {
     constructor(props){
         super(props);
         this.state = {
-            authorized  :   false
+            authorized  :   false,
+            HostURI :   window.location.hostname
         }
 
         axios.post('http://localhost:5000/v1/api/userinfo')
@@ -31,10 +32,30 @@ export default class Login extends Component {
             )
         }
         return (
-            <div class="login">
-                <a class="button-primary button" href="http://localhost:5000/v1/api/auth/google">Login with google</a>
-                <a class="button-primary button" href="http://localhost:5000/v1/api/auth/github">Login with github</a>
+            <div class="container login">
+                <div class="row">
+                    <h1>
+                        Welcome to seminar demo
+                    </h1>
+                    <h2>
+                        You can try yourself by going to {this.state.HostURI}
+                    </h2>
+                </div>
+                <br /><br />
+                <div className="row">
+                    <div className="one-third column">
+                        &nbsp;
+                    </div>
+                    <div className="one-third column">
+                        <a class="button-primary button u-full-width" href="http://localhost:5000/v1/api/auth/google">Login with google</a>
+                        <a class="button-primary button u-full-width" href="http://localhost:5000/v1/api/auth/github">Login with github</a>
+                    </div>
+                    <div className="one-third column">
+                        &nbsp;
+                    </div>
+                </div>
             </div>
+
         )
     }
 }
