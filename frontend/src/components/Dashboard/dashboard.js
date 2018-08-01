@@ -28,6 +28,19 @@ export default class Dashboard extends Component {
         })
     }
 
+    handleLogout = (event) => {
+        axios.post('http://localhost:5000/v1/api/logout')
+        .then((res)=>{
+            this.setState({
+                authorized  :   false
+            })
+        })
+        .catch((err)=>{
+            this.setState({
+                authorized  :   false
+            })
+        })
+    }
 
 
     render() {
@@ -44,6 +57,8 @@ export default class Dashboard extends Component {
                 <img src={this.state.avatar} alt="avatar" height="300" width="300"/>
                 <h4>{this.state.name}</h4>
                 <h4>{this.state.email}</h4>
+                <br /><br /><br /><br />
+                <input type="button" value="Logout" class="button-primary button" onClick={this.handleLogout} />
             </div>
         )
     }
